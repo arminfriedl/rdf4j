@@ -57,7 +57,7 @@ class GraphComparisons {
 
 	private static final Logger logger = LoggerFactory.getLogger(GraphComparisons.class);
 
-	private static final HashFunction hashFunction = Hashing.sha256();
+	private static final HashFunction hashFunction = Hashing.murmur3_32();
 
 	private static final HashCode initialHashCode = hashFunction.hashString("", Charsets.UTF_8);
 	private static final HashCode outgoing = hashFunction.hashString("+", Charsets.UTF_8);
@@ -221,7 +221,7 @@ class GraphComparisons {
 			Map<BNode, HashCode> lowestFound, List<BNode> parentFixpoints,
 			List<Map<BNode, HashCode>> finePartitionMappings) {
 
-		for (BNode node : partitioning.getLowestNonTrivialPartition()) {
+		for (BNode node : partitioning.getLowestNonTrivialPartition().stream().sorted(Comparator.comparing(BNode::getID)).collect(Collectors.toList())) {
 			List<BNode> fixpoints = new ArrayList<>(parentFixpoints);
 			fixpoints.add(node);
 
@@ -337,10 +337,11 @@ class GraphComparisons {
 			partitioning = new Partitioning(blankNodes);
 		}
 
+		int runs = 0;
 		if (!partitioning.getNodes().isEmpty()) {
 			do {
 				partitioning.nextIteration();
-				for (BNode b : partitioning.getNodes()) {
+				for (BNode b : partitioning.getNodes().stream().sorted(Comparator.comparing(BNode::getID)).collect(Collectors.toList())) {
 					for (Statement st : m.getStatements(b, null, null)) {
 						HashCode c = hashTuple(
 								partitioning.getPreviousHashCode(st.getObject()),
